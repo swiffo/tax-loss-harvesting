@@ -1,0 +1,87 @@
+# Tax Loss Harvesting
+
+## Synopsis
+
+## Data load and preprocessing
+Load in the data from Yahoo and sort by date.
+```{r, cache=TRUE}
+library(dplyr)
+library(ggplot2)
+
+SPY <- read.csv('http://ichart.finance.yahoo.com/table.csv?s=SPY&a=1&b=1&c=2005&g=d&ignore=.csv')
+SPY$Date <- as.Date(as.character(SPY$Date))
+SPY <- arrange(SPY, Date)
+
+ggplot(SPY, aes(x=Date, y=Close)) + geom_line()
+```
+
+## Buy and hold
+We find the PNL for buy and hold. First we set the tax rates.
+```{r}
+capitalGainsTax <- 0.27
+marginalTax <- 0.5
+```
+
+```{r}
+head(SPY)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+start <- SPY[1,]$Adj.Close
+
+SPY <- (SPY %>% mutate(cumPNL=Close - start, taxadjustedPNL=start + pmax(0,cumPNL)*(1-capitalGainsTax) + pmin(0,cumPNL)*(1-marginalTax) ))
+
+(ggplot(data=SPY) 
+  + aes(Date)
+  + geom_line(aes(y=Close, colour='raw')) 
+  + geom_line(aes(y=taxadjustedPNL, colour='adjusted'))
+  + ylab('SPY')
+  + ggtitle('Buy and Hold')
+  + scale_color_manual(name='Legend',values=c(raw='blue',adjusted='orange'))
+ )
+```
+
+## Upper Bound for Tax Harvesting
+In the following we assume we have an infinite number of securities with identical behaviour but which are treated as different for tax purposes. We employ a psychic person to trade at close with no transaction costs.
+
+This serves to construct an upper bound for the benefits of tax harvesting.
+
+### Split PNL into loss and gain
+We first create a data frame with daily PNL deltas.
+```{r}
+dates <- SPY$Date
+vals <- SPY$Close
+deltas <- data.frame(
+  Date=dates[2:length(dates)],
+  Close=vals[2:length(dates)],
+  prevClose=vals[1:length(dates)-1]
+)
+deltas$Delta <- deltas$Close - deltas$prevClose
+```
+
+```{r}
+deltas <- select(deltas,Date,Delta)
+SPY <- left_join(SPY, deltas, by='Date')
+SPY[is.na(SPY$Delta),'Delta'] <- 0
+SPY <- mutate(
+    SPY, 
+    cumGain=cumsum(pmax(0,Delta)), 
+    cumLoss=cumsum(pmin(0,Delta)),
+    psychic_taxadjustedPNL=start+(1-capitalGainsTax)*cumGain+(1-marginalTax)*cumLoss
+  )
+```
+
+Plotting this upper bound:
+```{r}
+( ggplot(data=SPY)
+  + aes(x=Date)
+  + geom_line(aes(y=psychic_taxadjustedPNL, colour='psychic'))
+  + geom_line(aes(y=Close, colour='Close'))
+  + geom_line(aes(y=taxadjustedPNL, colour='B&H'))
+  + ylab('PNL')
+  + ggtitle('PNL by Strategy')
+  + scale_color_manual(name='Legend',values=c(psychic='green',Close='orange', 'B&H'='violet'))
+)
+```
