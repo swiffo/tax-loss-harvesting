@@ -23,10 +23,6 @@ marginalTax <- 0.5
 ```
 
 ```{r}
-head(SPY)
-```
-
-```{r}
 library(dplyr)
 library(ggplot2)
 start <- SPY[1,]$Adj.Close
