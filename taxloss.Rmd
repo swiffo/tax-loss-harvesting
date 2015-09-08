@@ -108,8 +108,8 @@ Tax-loss harvesting consists of separating losses and gains into separate years 
 In order to realize as much loss as possible, we realize gains or losses at least once a year. Whether to make the year a loss-year or a gains-year depends on whether the PNL hits a pre-chosen lower or upper bound first.
 
 ```{r}
-gain_bound <- 0.1
-loss_bound <- -0.1
+gain_bound <- 0.06
+loss_bound <- -0.03
 ```
 
 Set up starting conditions:
@@ -140,10 +140,12 @@ for(row_index in 1:row_count) {
       pnl <- 0
       last_reset_close <- row$Close
     } 
+    pnl_actualized <- 0
   }
   
-  close_change <- (row$Close - last_reset_close) / last_reset_close - 1
+  close_change <- (row$Close - last_reset_close) / last_reset_close 
   if(pnl_actualized==0 && (close_change <= loss_bound || close_change >= gain_bound) ) {
+    print(sprintf('Realizing on %s with change %f', row$Date, close_change))
     pnl_actualized <- sign(pnl)
     realized_pnl <- realized_pnl + taxadjusted_value(0,pnl)
     pnl <- 0
