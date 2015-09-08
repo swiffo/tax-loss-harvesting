@@ -177,6 +177,23 @@ SPY &lt;- mutate(
 <p>In order to realize as much loss as possible, we realize gains or losses at least once a year. Whether to make the year a loss-year or a gains-year depends on whether the PNL hits a pre-chosen lower or upper bound first.</p>
 <pre class="r"><code>gain_bound &lt;- 0.04
 loss_bound &lt;- -0.02</code></pre>
+<p>Set up starting conditions:</p>
+<pre class="r"><code>first_row &lt;- SPY[1,]
+year &lt;- first_row$Year
+total_value &lt;- first_row$Close
+pnl &lt;- 0</code></pre>
+<div id="monty-on-the-run" class="section level3">
+<h3>Monty on the Run</h3>
+<pre class="r"><code>for(row_index in 1:dim(SPY)[1]) {
+  row &lt;- SPY[row_index,]
+  new_year &lt;- row$Year
+  pnl &lt;- pnl + row$Delta
+  
+  if(new_year != year) {
+    
+  }
+}</code></pre>
+</div>
 </div>
 </div>
 
