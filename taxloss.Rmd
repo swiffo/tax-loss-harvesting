@@ -108,8 +108,8 @@ Tax-loss harvesting consists of separating losses and gains into separate years 
 In order to realize as much loss as possible, we realize gains or losses at least once a year. Whether to make the year a loss-year or a gains-year depends on whether the PNL hits a pre-chosen lower or upper bound first.
 
 ```{r}
-gain_bound <- 0.04
-loss_bound <- -0.02
+gain_bound <- 0.1
+loss_bound <- -0.1
 ```
 
 Set up starting conditions:
@@ -122,7 +122,7 @@ last_reset_close <- first_row$Close
 pnl <- 0
 realized_pnl <- 0
 pnl_vector <- vector(mode="numeric", length=row_count)
-pnl_vector$Name <- "pnl"
+# pnl_vector$Name <- "pnl"
 pnl_actualized <- 0 # -1 for loss, 0 for not actualized, 1 for gain
 ```
 
@@ -149,12 +149,30 @@ for(row_index in 1:row_count) {
     pnl <- 0
   }
   
-  pnl_vector[row_index] <- realized_pnl + taxadjusted_value(0,pnl)
+  pnl_vector[row_index] <- realized_pnl + taxadjusted_value(0,pnl)[1]
 }
 ```
 
 Having the PNL vector we add it to the data frame.
 
 ```{r}
-SPY <- cbind(SPY, pnl_vector)
+naive_value <- pnl_vector + first_row$Close
+SPY <- cbind(SPY, naive_value)
 ```
+
+And plot:
+```{r}
+( ggplot(data=SPY)
+  + aes(x=Date)
+  + geom_line(aes(y=Close, colour='Close'))
+  + geom_line(aes(y=taxadjustedPNL, colour='B&H'))
+  + geom_line(aes(y=naive_value, colour='naive'))
+  + ylab('PNL')
+  + ggtitle('PNL by Strategy')
+  + scale_color_manual(name='Legend',values=c(naive='green',Close='orange', 'B&H'='violet'))
+)
+```
+
+Some basic data:
+* Buy and hold: `r tail(SPY,n=1)$taxadjustedPNL`
+* Naive: `r tail(SPY,n=1)$naive_value`
