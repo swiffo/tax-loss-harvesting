@@ -1,5 +1,9 @@
-# Tax Loss Harvesting
-
+---
+title: "Tax Loss Harvesting"
+output: 
+  html_document:
+    keep_md: true
+---
 ## Synopsis
 
 ## Preparations
