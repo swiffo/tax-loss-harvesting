@@ -1,9 +1,4 @@
----
-title: "Tax Loss Harvesting"
-output: 
-  html_document:
-    keep_md: true
----
+# Tax Loss Harvesting
 # Tax Loss Harvesting
 
 ## Synopsis
@@ -11,7 +6,8 @@ output:
 ## Preparations
 ### Data load and preprocessing
 Load in the data from Yahoo and sort by date.
-```{r, cache=TRUE}
+
+```r
 library(dplyr)
 library(ggplot2)
 
@@ -23,16 +19,20 @@ SPY <- arrange(SPY, Date)
 ggplot(SPY, aes(x=Date, y=Close)) + geom_line()
 ```
 
+![](taxloss_files/figure-html/unnamed-chunk-1-1.png) 
+
 ### Some useful definitions
 #### Constants
 Tax rates are based on Denmark.
-```{r}
+
+```r
 capitalGainsTax <- 0.27
 marginalTax <- 0.56
 ```
 
 #### Some useful functions
-```{r}
+
+```r
 # Calculates value of position if it was sold right now
 # If positive, capital gains tax is applied.
 # If negative, savings in tax from deductions are counted as positive
@@ -46,8 +46,25 @@ taxadjusted_value <- function(start_value, end_value) {
 ## Buy and hold
 We find the PNL for buy and hold. I.e., assuming the position is simply held, what would its value be to the investor if sold at a given point in time (taking into account capital gains tax and tax deductions).
 
-```{r}
+
+```r
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(ggplot2)
 start <- SPY[1,]$Close
 
@@ -63,12 +80,15 @@ SPY <- mutate( SPY, taxadjustedPNL = taxadjusted_value(start, Close))
  )
 ```
 
+![](taxloss_files/figure-html/unnamed-chunk-4-1.png) 
+
 ## Upper Bound for Tax Harvesting
 We find a naive upper bound for the value of tax harvesting by applying the tax deduction to any daily loss even if subsequently offset by gains. Thus, losses and gains are tracked separately, the former used to deduct taxable income ad infinitum and the latter taxed by capital gains tax.
 
 ### Split PNL into loss and gain
 We first create a data frame with daily PNL deltas.
-```{r}
+
+```r
 dates <- SPY$Date
 vals <- SPY$Close
 deltas <- data.frame(
@@ -79,7 +99,8 @@ deltas <- data.frame(
 deltas$Delta <- deltas$Close - deltas$prevClose # Recorded on day D, change in Close from D-1 to D
 ```
 
-```{r}
+
+```r
 deltas <- select(deltas,Date,Delta)
 SPY <- left_join(SPY, deltas, by='Date')
 SPY[is.na(SPY$Delta),'Delta'] <- 0 # First entry has no previous entry and thus no delta
@@ -92,7 +113,8 @@ SPY <- mutate(
 ```
 
 Plotting this upper bound:
-```{r}
+
+```r
 ( ggplot(data=SPY)
   + aes(x=Date)
   + geom_line(aes(y=upperboundPNL, colour='psychic'))
@@ -104,18 +126,22 @@ Plotting this upper bound:
 )
 ```
 
+![](taxloss_files/figure-html/unnamed-chunk-7-1.png) 
+
 ## An attempt at tax harvesting
 Tax-loss harvesting consists of separating losses and gains into separate years to take advantage in the different tax rates used when reducing income tax and applying capital gains tax.
 
 In order to realize as much loss as possible, we realize gains or losses at least once a year. Whether to make the year a loss-year or a gains-year depends on whether the PNL hits a pre-chosen lower or upper bound first.
 
-```{r}
+
+```r
 gain_bound <- 0.06
 loss_bound <- -0.03
 ```
 
 Set up starting conditions:
-```{r}
+
+```r
 row_count <- dim(SPY)[1] 
 first_row <- SPY[1,]
 year <- first_row$Year 
@@ -128,7 +154,8 @@ pnl_vector <- vector(mode="numeric", length=row_count) # Daily PNL (assuming ful
 ```
 
 ### Monty on the Run
-```{r}
+
+```r
 for(row_index in 1:row_count) {
   row <- SPY[row_index,]
   new_year <- row$Year
@@ -156,15 +183,32 @@ for(row_index in 1:row_count) {
 }
 ```
 
+```
+## [1] "Realizing on 2005-04-15 with change -0.040030"
+## [1] "Realizing on 2006-01-03 with change 0.065512"
+## [1] "Realizing on 2007-05-03 with change 0.063521"
+## [1] "Realizing on 2008-01-16 with change -0.031053"
+## [1] "Realizing on 2009-01-09 with change -0.041631"
+## [1] "Realizing on 2010-01-04 with change 0.219127"
+## [1] "Realizing on 2011-04-26 with change 0.060921"
+## [1] "Realizing on 2012-02-07 with change 0.060921"
+## [1] "Realizing on 2012-02-08 with change 0.064069"
+## [1] "Realizing on 2013-03-08 with change 0.064220"
+## [1] "Realizing on 2014-01-29 with change -0.030450"
+## [1] "Realizing on 2015-01-02 with change 0.123059"
+```
+
 Having the PNL vector we add it to the data frame.
 
-```{r}
+
+```r
 naive_value <- pnl_vector + first_row$Close
 SPY <- cbind(SPY, naive_value)
 ```
 
 And plot:
-```{r}
+
+```r
 ( ggplot(data=SPY)
   + aes(x=Date)
   + geom_line(aes(y=Close, colour='Close'))
@@ -176,6 +220,8 @@ And plot:
 )
 ```
 
+![](taxloss_files/figure-html/unnamed-chunk-12-1.png) 
+
 Some basic data:
-* Buy and hold: `r tail(SPY,n=1)$taxadjustedPNL`
-* Naive: `r tail(SPY,n=1)$naive_value`
+* Buy and hold: 176.2515062
+* Naive: 199.3239033
