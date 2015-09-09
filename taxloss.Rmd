@@ -118,16 +118,15 @@ loss_bound <- -0.03
 
 Set up starting conditions:
 ```{r}
-row_count <- dim(SPY)[1]
+row_count <- dim(SPY)[1] 
 first_row <- SPY[1,]
-year <- first_row$Year
-total_value <- first_row$Close
-last_reset_close <- first_row$Close
-pnl <- 0
-realized_pnl <- 0
-pnl_vector <- vector(mode="numeric", length=row_count)
-# pnl_vector$Name <- "pnl"
-pnl_actualized <- 0 # -1 for loss, 0 for not actualized, 1 for gain
+year <- first_row$Year 
+last_reset_close <- first_row$Close # Value of Close last time we realized gains/losses
+
+unrealized_pnl <- 0 # PNL which has not yet been taxed/deducted (realized)
+realized_pnl <- 0 # PNL which has been taxed/deducted
+pnl_actualized <- 0 # -1 for loss, 0 for not actualized, 1 for gain (records last tax realization)
+pnl_vector <- vector(mode="numeric", length=row_count) # Daily PNL (assuming full sell-out)
 ```
 
 ### Monty on the Run
@@ -135,13 +134,13 @@ pnl_actualized <- 0 # -1 for loss, 0 for not actualized, 1 for gain
 for(row_index in 1:row_count) {
   row <- SPY[row_index,]
   new_year <- row$Year
-  pnl <- pnl + row$Delta
+  unrealized_pnl <- unrealized_pnl + row$Delta
   
   if(new_year != year) {
     year <- new_year
-    if(pnl_actualized==0 || sign(pnl_actualized)==sign(pnl)) {
-      realized_pnl <- realized_pnl + taxadjusted_value(0,pnl)
-      pnl <- 0
+    if(pnl_actualized==0 || sign(pnl_actualized)==sign(unrealized_pnl)) {
+      realized_pnl <- realized_pnl + taxadjusted_value(0,unrealized_pnl)
+      unrealized_pnl <- 0
       last_reset_close <- row$Close
     } 
     pnl_actualized <- 0
@@ -150,12 +149,12 @@ for(row_index in 1:row_count) {
   close_change <- (row$Close - last_reset_close) / last_reset_close 
   if(pnl_actualized==0 && (close_change <= loss_bound || close_change >= gain_bound) ) {
     print(sprintf('Realizing on %s with change %f', row$Date, close_change))
-    pnl_actualized <- sign(pnl)
-    realized_pnl <- realized_pnl + taxadjusted_value(0,pnl)
-    pnl <- 0
+    pnl_actualized <- sign(unrealized_pnl)
+    realized_pnl <- realized_pnl + taxadjusted_value(0,unrealized_pnl)
+    unrealized_pnl <- 0
   }
   
-  pnl_vector[row_index] <- realized_pnl + taxadjusted_value(0,pnl)[1]
+  pnl_vector[row_index] <- realized_pnl + taxadjusted_value(0,unrealized_pnl)[1]
 }
 ```
 
