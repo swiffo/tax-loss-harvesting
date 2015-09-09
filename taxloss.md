@@ -113,7 +113,7 @@ SPY <- mutate(
   )
 ```
 
-Plotting this upper bound:
+Plotting this upper bound (labelled 'psychic' for historical reasons):
 
 ```r
 ( ggplot(data=SPY)
@@ -128,6 +128,9 @@ Plotting this upper bound:
 ```
 
 ![](taxloss_files/figure-html/unnamed-chunk-7-1.png) 
+
+### Thoughts on upper bound
+The upper bound calculated above is so high as to be useless. I bet you wish I had put this revelation at the beginning of this section.
 
 ## A Naive Approach to Tax Harvesting
 Tax-loss harvesting consists of separating losses and gains into separate years to take advantage in the different tax rates used when reducing income tax and applying capital gains tax.
