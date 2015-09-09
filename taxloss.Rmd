@@ -135,6 +135,7 @@ unrealized_pnl <- 0 # PNL which has not yet been taxed/deducted (realized)
 realized_pnl <- 0 # PNL which has been taxed/deducted
 pnl_actualized <- 0 # -1 for loss, 0 for not actualized, 1 for gain (records last tax realization)
 pnl_vector <- vector(mode="numeric", length=row_count) # Daily PNL (assuming full sell-out)
+pnl_actualization_dates <- vector(mode='character')
 ```
 
 ### Backtesting
@@ -157,6 +158,7 @@ for(row_index in 1:row_count) {
   close_change <- (row$Close - last_reset_close) / last_reset_close 
   if(pnl_actualized==0 && (close_change <= loss_bound || close_change >= gain_bound) ) {
     print(sprintf('Realizing on %s with change %f', row$Date, close_change))
+    pnl_actualization_dates <- c(pnl_actualization_dates, as.character(row$Date))
     pnl_actualized <- sign(unrealized_pnl)
     realized_pnl <- realized_pnl + taxadjusted_value(0,unrealized_pnl)
     unrealized_pnl <- 0
@@ -187,12 +189,12 @@ And plot:
 ```
 
 ### Some Basic Data
-Ending levels:
+#### Ending levels
 
 * Buy and hold: `r tail(SPY,n=1)$taxadjustedPNL`
 * Naive: `r tail(SPY,n=1)$naive_value`
 
-Returns:
+#### Returns
 ```{r}
 years <- as.numeric(difftime(tail(SPY,n=1)$Date, first_row$Date)) / 365.25
 start_close <- first_row$Close
@@ -205,3 +207,10 @@ naive_ann_rtns <- log(1+naive_returns)/years
 
 * Buy and hold: `r bh_returns`, (ann. `r bh_ann_rtns`)
 * Naive: `r naive_returns`, (ann. `r naive_ann_rtns`)
+
+#### PNL realized on the following dates
+The following are the non-year-end dates on which PNL was realized.
+```{r}
+for(d in pnl_actualization_dates)
+  print(d)
+```

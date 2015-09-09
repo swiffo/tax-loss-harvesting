@@ -2,6 +2,9 @@
 # Tax Loss Harvesting
 
 ## Synopsis
+We examine the value of doing tax loss harvesting assuming we have two versions of SPY which are treated as separate for tax purposes.
+
+The purpose is to compare a naive algorithm for realizing as many losses as possible with a simple buy and hold.
 
 ## Preparations
 ### Data load and preprocessing
@@ -128,11 +131,18 @@ Plotting this upper bound:
 
 ![](taxloss_files/figure-html/unnamed-chunk-7-1.png) 
 
-## An attempt at tax harvesting
+## A Naive Approach to Tax Harvesting
 Tax-loss harvesting consists of separating losses and gains into separate years to take advantage in the different tax rates used when reducing income tax and applying capital gains tax.
 
 In order to realize as much loss as possible, we realize gains or losses at least once a year. Whether to make the year a loss-year or a gains-year depends on whether the PNL hits a pre-chosen lower or upper bound first.
 
+### The Basic Idea
+Years are split into loss-years and gains-years by the following logic. If losses reach a certain level, we immediately realize them no matter what time of the year it is. If at the end of the year there are more losses, these are realized too. Otherwise the gains are passed on to the next year. Similarly (but opposite) for gains. 
+
+If neither the loss or gains level is reached we realized loss or gain at the end of the year. This is to lock in losses (if we are down for the year) or increase the change of going negative next year (if we are up for the year).
+
+### Implementation
+The levels for locking in losses and gains:
 
 ```r
 gain_bound <- 0.06
@@ -151,9 +161,10 @@ unrealized_pnl <- 0 # PNL which has not yet been taxed/deducted (realized)
 realized_pnl <- 0 # PNL which has been taxed/deducted
 pnl_actualized <- 0 # -1 for loss, 0 for not actualized, 1 for gain (records last tax realization)
 pnl_vector <- vector(mode="numeric", length=row_count) # Daily PNL (assuming full sell-out)
+pnl_actualization_dates <- vector(mode='character')
 ```
 
-### Monty on the Run
+### Backtesting
 
 ```r
 for(row_index in 1:row_count) {
@@ -174,6 +185,7 @@ for(row_index in 1:row_count) {
   close_change <- (row$Close - last_reset_close) / last_reset_close 
   if(pnl_actualized==0 && (close_change <= loss_bound || close_change >= gain_bound) ) {
     print(sprintf('Realizing on %s with change %f', row$Date, close_change))
+    pnl_actualization_dates <- c(pnl_actualization_dates, as.character(row$Date))
     pnl_actualized <- sign(unrealized_pnl)
     realized_pnl <- realized_pnl + taxadjusted_value(0,unrealized_pnl)
     unrealized_pnl <- 0
@@ -223,12 +235,12 @@ And plot:
 ![](taxloss_files/figure-html/unnamed-chunk-12-1.png) 
 
 ### Some Basic Data
-Ending levels:
+#### Ending levels
 
 * Buy and hold: 176.2515062
 * Naive: 199.3239033
 
-Returns:
+#### Returns
 
 ```r
 years <- as.numeric(difftime(tail(SPY,n=1)$Date, first_row$Date)) / 365.25
@@ -242,3 +254,26 @@ naive_ann_rtns <- log(1+naive_returns)/years
 
 * Buy and hold: 0.4822261, (ann. 0.0371331)
 * Naive: 0.6762585, (ann. 0.0487407)
+
+#### PNL realized on the following dates
+The following are the non-year-end dates on which PNL was realized.
+
+```r
+for(d in pnl_actualization_dates)
+  print(d)
+```
+
+```
+## [1] "2005-04-15"
+## [1] "2006-01-03"
+## [1] "2007-05-03"
+## [1] "2008-01-16"
+## [1] "2009-01-09"
+## [1] "2010-01-04"
+## [1] "2011-04-26"
+## [1] "2012-02-07"
+## [1] "2012-02-08"
+## [1] "2013-03-08"
+## [1] "2014-01-29"
+## [1] "2015-01-02"
+```
