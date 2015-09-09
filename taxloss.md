@@ -222,6 +222,23 @@ And plot:
 
 ![](taxloss_files/figure-html/unnamed-chunk-12-1.png) 
 
-Some basic data:
+### Some Basic Data
+Ending levels:
+
 * Buy and hold: 176.2515062
 * Naive: 199.3239033
+
+Returns:
+
+```r
+years <- as.numeric(difftime(tail(SPY,n=1)$Date, first_row$Date)) / 365.25
+start_close <- first_row$Close
+bh_returns <- ( tail(SPY,n=1)$taxadjustedPNL - start_close) / start_close
+bh_ann_rtns <- log(1+bh_returns)/years 
+
+naive_returns <- ( tail(SPY,n=1)$naive_value - start_close) / start_close
+naive_ann_rtns <- log(1+naive_returns)/years
+```
+
+* Buy and hold: 0.4822261, (ann. 0.0371331)
+* Naive: 0.6762585, (ann. 0.0487407)
