@@ -7,6 +7,9 @@ output:
 # Tax Loss Harvesting
 
 ## Synopsis
+We examine the value of doing tax loss harvesting assuming we have two versions of SPY which are treated as separate for tax purposes.
+
+The purpose is to compare a naive algorithm for realizing as many losses as possible with a simple buy and hold.
 
 ## Preparations
 ### Data load and preprocessing
@@ -104,11 +107,18 @@ Plotting this upper bound:
 )
 ```
 
-## An attempt at tax harvesting
+## A Naive Approach to Tax Harvesting
 Tax-loss harvesting consists of separating losses and gains into separate years to take advantage in the different tax rates used when reducing income tax and applying capital gains tax.
 
 In order to realize as much loss as possible, we realize gains or losses at least once a year. Whether to make the year a loss-year or a gains-year depends on whether the PNL hits a pre-chosen lower or upper bound first.
 
+### The Basic Idea
+Years are split into loss-years and gains-years by the following logic. If losses reach a certain level, we immediately realize them no matter what time of the year it is. If at the end of the year there are more losses, these are realized too. Otherwise the gains are passed on to the next year. Similarly (but opposite) for gains. 
+
+If neither the loss or gains level is reached we realized loss or gain at the end of the year. This is to lock in losses (if we are down for the year) or increase the change of going negative next year (if we are up for the year).
+
+### Implementation
+The levels for locking in losses and gains:
 ```{r}
 gain_bound <- 0.06
 loss_bound <- -0.03
@@ -127,7 +137,7 @@ pnl_actualized <- 0 # -1 for loss, 0 for not actualized, 1 for gain (records las
 pnl_vector <- vector(mode="numeric", length=row_count) # Daily PNL (assuming full sell-out)
 ```
 
-### Monty on the Run
+### Backtesting
 ```{r}
 for(row_index in 1:row_count) {
   row <- SPY[row_index,]
