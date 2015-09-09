@@ -1,6 +1,4 @@
 # Tax Loss Harvesting
-# Tax Loss Harvesting
-
 ## Synopsis
 We examine the value of doing tax loss harvesting assuming we have two versions of SPY which are treated as separate for tax purposes.
 
