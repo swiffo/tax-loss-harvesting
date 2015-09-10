@@ -186,6 +186,7 @@ for(row_index in 1:row_count) {
   close_change <- (row$Close - last_reset_close) / last_reset_close 
   if(pnl_actualized==0 && (close_change <= loss_bound || close_change >= gain_bound) ) {
     print(sprintf('Realizing on %s with change %f', row$Date, close_change))
+    last_reset_close <- row$Close
     pnl_actualization_dates <- c(pnl_actualization_dates, as.character(row$Date))
     pnl_actualized <- sign(unrealized_pnl)
     realized_pnl <- realized_pnl + taxadjusted_value(0,unrealized_pnl)
@@ -198,17 +199,16 @@ for(row_index in 1:row_count) {
 
 ```
 ## [1] "Realizing on 2005-04-15 with change -0.040030"
-## [1] "Realizing on 2006-01-03 with change 0.065512"
+## [1] "Realizing on 2006-01-03 with change 0.109943"
 ## [1] "Realizing on 2007-05-03 with change 0.063521"
-## [1] "Realizing on 2008-01-16 with change -0.031053"
+## [1] "Realizing on 2008-01-02 with change -0.036049"
 ## [1] "Realizing on 2009-01-09 with change -0.041631"
-## [1] "Realizing on 2010-01-04 with change 0.219127"
+## [1] "Realizing on 2010-01-04 with change 0.272084"
 ## [1] "Realizing on 2011-04-26 with change 0.060921"
-## [1] "Realizing on 2012-02-07 with change 0.060921"
-## [1] "Realizing on 2012-02-08 with change 0.064069"
-## [1] "Realizing on 2013-03-08 with change 0.064220"
+## [1] "Realizing on 2012-01-03 with change -0.054084"
+## [1] "Realizing on 2013-01-02 with change 0.145569"
 ## [1] "Realizing on 2014-01-29 with change -0.030450"
-## [1] "Realizing on 2015-01-02 with change 0.123059"
+## [1] "Realizing on 2015-01-02 with change 0.158331"
 ```
 
 Having the PNL vector we add it to the data frame.
@@ -239,7 +239,7 @@ And plot:
 #### Ending levels
 
 * Buy and hold: 176.2515062
-* Naive: 199.3239033
+* Naive: 201.4380013
 
 #### Returns
 
@@ -254,7 +254,7 @@ naive_ann_rtns <- log(1+naive_returns)/years
 ```
 
 * Buy and hold: 0.4822261, (ann. 0.0371331)
-* Naive: 0.6762585, (ann. 0.0487407)
+* Naive: 0.6940375, (ann. 0.0497362)
 
 #### PNL realized on the following dates
 The following are the non-year-end dates on which PNL was realized.
@@ -268,13 +268,12 @@ for(d in pnl_actualization_dates)
 ## [1] "2005-04-15"
 ## [1] "2006-01-03"
 ## [1] "2007-05-03"
-## [1] "2008-01-16"
+## [1] "2008-01-02"
 ## [1] "2009-01-09"
 ## [1] "2010-01-04"
 ## [1] "2011-04-26"
-## [1] "2012-02-07"
-## [1] "2012-02-08"
-## [1] "2013-03-08"
+## [1] "2012-01-03"
+## [1] "2013-01-02"
 ## [1] "2014-01-29"
 ## [1] "2015-01-02"
 ```

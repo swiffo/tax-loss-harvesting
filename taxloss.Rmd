@@ -159,6 +159,7 @@ for(row_index in 1:row_count) {
   close_change <- (row$Close - last_reset_close) / last_reset_close 
   if(pnl_actualized==0 && (close_change <= loss_bound || close_change >= gain_bound) ) {
     print(sprintf('Realizing on %s with change %f', row$Date, close_change))
+    last_reset_close <- row$Close
     pnl_actualization_dates <- c(pnl_actualization_dates, as.character(row$Date))
     pnl_actualized <- sign(unrealized_pnl)
     realized_pnl <- realized_pnl + taxadjusted_value(0,unrealized_pnl)
